@@ -61,4 +61,4 @@ exclude:
 - icomoon-selection.json
 - readme.md
 
-theme: jekyll-theme-minimal
+theme: jekyll-theme-modernist
