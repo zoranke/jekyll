@@ -68,14 +68,14 @@ class TestCollections < JekyllUnitTest
       end
 
       should "have a output attribute" do
-        assert_equal false, @collection.to_liquid["output"]
+        refute @collection.to_liquid["output"]
       end
     end
 
     should "know whether it should be written or not" do
-      assert_equal false, @collection.write?
+      refute @collection.write?
       @collection.metadata["output"] = true
-      assert_equal true, @collection.write?
+      assert @collection.write?
       @collection.metadata.delete "output"
     end
   end
@@ -130,6 +130,7 @@ class TestCollections < JekyllUnitTest
       assert @site.collections["methods"].docs.is_a? Array
       @site.collections["methods"].docs.each do |doc|
         assert doc.is_a? Jekyll::Document
+        # rubocop:disable Style/WordArray
         assert_includes %w(
           _methods/configuration.md
           _methods/sanitized_path.md
@@ -142,6 +143,7 @@ class TestCollections < JekyllUnitTest
           _methods/3940394-21-9393050-fifif1323-test.md
           _methods/trailing-dots...md
         ), doc.relative_path
+        # rubocop:enable Style/WordArray
       end
     end
 

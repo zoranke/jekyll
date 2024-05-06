@@ -5,8 +5,8 @@ module Jekyll
     class UnifiedPayloadDrop < Drop
       mutable true
 
-      attr_accessor :page, :layout, :content, :paginator
-      attr_accessor :highlighter_prefix, :highlighter_suffix
+      attr_accessor :content, :page, :layout, :paginator,
+                    :highlighter_prefix, :highlighter_suffix
 
       def jekyll
         JekyllDrop.global
@@ -14,6 +14,10 @@ module Jekyll
 
       def site
         @site_drop ||= SiteDrop.new(@obj)
+      end
+
+      def theme
+        @theme_drop ||= ThemeDrop.new(@obj.theme) if @obj.theme
       end
 
       private

@@ -15,40 +15,20 @@ simply because Jekyll treats files without front matter as static assets.
 So if you only need to push generated HTML, you're good to go without any
 further setup.
 
-Never built a website with GitHub Pages before? [See this marvelous guide by
-Jonathan McGlone](http://jmcglone.com/guides/github-pages/) to get you up and
-running. This guide will teach you what you need to know about Git, GitHub, and
-Jekyll to create your very own website on GitHub Pages.
+The [GitHub Pages Documentation](https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages)
+is comprehensive and includes a [a guide to setting up a GitHub Pages site using
+Jekyll](https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages/setting-up-a-github-pages-site-with-jekyll).
+We recommend following this guide.
 
-##  The github-pages gem
-
-Our friends at GitHub have provided the
-[github-pages](https://github.com/github/pages-gem) gem which is used to manage
-[Jekyll and its dependencies on GitHub Pages](https://pages.github.com/versions/).
-Using it in your projects means that when you deploy your site to GitHub Pages,
-you will not be caught by unexpected differences between various versions of the
-gems.
-
-Note that GitHub Pages runs in `safe` mode and only allows [a set of whitelisted
-plugins](https://help.github.com/articles/configuring-jekyll-plugins/#default-plugins).
-
-To use the currently-deployed version of the gem in your project, add the
-following to your `Gemfile`:
-
-```ruby
-source "https://rubygems.org"
-
-gem "github-pages", group: :jekyll_plugins
-```
-
-Be sure to run `bundle update` often.
+This page contains some additional information which may be useful when working
+on GitHub Pages sites with Jekyll.
 
 <div class="note">
   <h5>GitHub Pages Documentation, Help, and Support</h5>
   <p>
     For more information about what you can do with GitHub Pages, as well as for
     troubleshooting guides, you should check out
-    <a href="https://help.github.com/categories/github-pages-basics/">GitHub’s Pages Help section</a>.
+    <a href="https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages">GitHub’s Pages Help section</a>.
     If all else fails, you should contact <a href="https://github.com/contact">GitHub Support</a>.
   </p>
 </div>
@@ -58,12 +38,12 @@ Be sure to run `bundle update` often.
 Sometimes it's nice to preview your Jekyll site before you push your `gh-pages`
 branch to GitHub. The subdirectory-like URL structure GitHub uses for
 Project Pages complicates the proper resolution of URLs. In order to assure your
-site builds properly, use the handy [URL filters](/docs/liquid/filters/):
+site builds properly, use the handy [URL filters]({{ '/docs/liquid/filters/' | relative_url }}):
 
 {% raw %}
 ```liquid
 <!-- For styles with static names... -->
-<link href="{{ "/assets/css/style.css" | relative_url }}" rel="stylesheet">
+<link href="{{ 'assets/css/style.css' | relative_url }}" rel="stylesheet">
 <!-- For documents/pages whose URLs can change... -->
 [{{ page.title }}]("{{ page.url | relative_url }}")
 ```
@@ -76,7 +56,7 @@ will resolve properly.
 ## Deploying Jekyll to GitHub Pages
 
 GitHub Pages work by looking at certain branches of repositories on GitHub.
-There are two basic types available: [user/organization and project pages](https://help.github.com/articles/user-organization-and-project-pages/).
+There are two basic types available: [user/organization and project pages](https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages/about-github-pages#types-of-github-pages-sites).
 The way to deploy these two types of sites are nearly identical, except for a
 few minor details.
 
@@ -115,14 +95,14 @@ looking at right now is contained in the [docs
 folder]({{ site.repository }}/tree/master/docs) of the same repository.
 
 Please refer to GitHub official documentation on
-[user, organization and project pages](https://help.github.com/articles/user-organization-and-project-pages/)
+[user, organization and project pages](https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages/about-github-pages#types-of-github-pages-sites)
 to see more detailed examples.
 
 <div class="note warning">
   <h5>Source files must be in the root directory</h5>
   <p>
-    GitHub Pages <a href="https://help.github.com/articles/troubleshooting-github-pages-build-failures#source-setting">overrides</a>
-    the <a href="/docs/configuration/options/">“Site Source”</a>
+    GitHub Pages <a href="https://help.github.com/en/github/working-with-github-pages/troubleshooting-jekyll-build-errors-for-github-pages-sites">overrides</a>
+    the <a href="{{ '/docs/configuration/options/' | relative_url }}">“Site Source”</a>
     configuration value, so if you locate your files anywhere other than the
     root directory, your site may not build correctly.
   </p>
@@ -135,6 +115,17 @@ to see more detailed examples.
     While Windows is not officially supported, it is possible
     to install the <code>github-pages</code> gem on Windows.
     Special instructions can be found on our
-    <a href="/docs/installation/windows/">Windows-specific docs page</a>.
+    <a href="{{ '/docs/installation/windows/' | relative_url }}">Windows-specific docs page</a>.
   </p>
 </div>
+
+### Running and Testing Locally
+
+Once the project is configured with the github-pages environment, it's quite hard to switch back and forth with the local settings and the production-level settings. For that we can use certain CLI options to make the workflow hassle-free.  
+
+```sh
+bundle exec jekyll serve --baseurl=""
+```
+
+This will run the jekyll server on your local machine i.e. on `http://localhost:4000`. Refer <a href="{{ '/docs/configuration/options/#serve-command-options' | relative_url }}">server options</a> for available options.
+

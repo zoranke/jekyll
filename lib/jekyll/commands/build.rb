@@ -30,8 +30,8 @@ module Jekyll
           site = Jekyll::Site.new(options)
 
           if options.fetch("skip_initial_build", false)
-            Jekyll.logger.warn "Build Warning:", "Skipping the initial build." \
-                               " This may result in an out-of-date site."
+            Jekyll.logger.warn "Build Warning:",
+                               "Skipping the initial build. This may result in an out-of-date site."
           else
             build(site, options)
           end
@@ -73,17 +73,6 @@ module Jekyll
         #
         # Returns nothing.
         def watch(site, options)
-          # Warn Windows users that they might need to upgrade.
-          if Utils::Platforms.bash_on_windows?
-            Jekyll.logger.warn "",
-                               "Auto-regeneration may not work on some Windows versions."
-            Jekyll.logger.warn "",
-                               "Please see: https://github.com/Microsoft/BashOnWindows/issues/216"
-            Jekyll.logger.warn "",
-                               "If it does not work, please upgrade Bash on Windows or "\
-                               "run Jekyll with --no-watch."
-          end
-
           External.require_with_graceful_fail "jekyll-watch"
           Jekyll::Watcher.watch(options, site)
         end

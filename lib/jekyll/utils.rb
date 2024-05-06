@@ -13,8 +13,8 @@ module Jekyll
     # Constants for use in #slugify
     SLUGIFY_MODES = %w(raw default pretty ascii latin).freeze
     SLUGIFY_RAW_REGEXP = Regexp.new('\\s+').freeze
-    SLUGIFY_DEFAULT_REGEXP = Regexp.new("[^[:alnum:]]+").freeze
-    SLUGIFY_PRETTY_REGEXP = Regexp.new("[^[:alnum:]._~!$&'()+,;=@]+").freeze
+    SLUGIFY_DEFAULT_REGEXP = Regexp.new("[^\\p{M}\\p{L}\\p{Nd}]+").freeze
+    SLUGIFY_PRETTY_REGEXP = Regexp.new("[^\\p{M}\\p{L}\\p{Nd}._~!$&'()+,;=@]+").freeze
     SLUGIFY_ASCII_REGEXP = Regexp.new("[^[A-Za-z0-9]]+").freeze
 
     # Takes a slug and turns it into a simple title.
@@ -68,11 +68,14 @@ module Jekyll
     #
     # Returns an array
     def pluralized_array_from_hash(hash, singular_key, plural_key)
-      [].tap do |array|
-        value = value_from_singular_key(hash, singular_key)
-        value ||= value_from_plural_key(hash, plural_key)
-        array << value
-      end.flatten.compact
+      array = []
+      value = value_from_singular_key(hash, singular_key)
+      value ||= value_from_plural_key(hash, plural_key)
+
+      array << value
+      array.flatten!
+      array.compact!
+      array
     end
 
     def value_from_singular_key(hash, key)
@@ -125,7 +128,8 @@ module Jekyll
     # Returns the parsed date if successful, throws a FatalException
     # if not
     def parse_date(input, msg = "Input could not be parsed.")
-      Time.parse(input).localtime
+      @parse_date_cache ||= {}
+      @parse_date_cache[input] ||= Time.parse(input).localtime
     rescue ArgumentError
       raise Errors::InvalidDateError, "Invalid date '#{input}': #{msg}"
     end
@@ -133,14 +137,14 @@ module Jekyll
     # Determines whether a given file has
     #
     # Returns true if the YAML front matter is present.
-    # rubocop: disable PredicateName
+    # rubocop: disable Naming/PredicateName
     def has_yaml_header?(file)
-      !!(File.open(file, "rb", &:readline) =~ %r!\A---\s*\r?\n!)
+      File.open(file, "rb", &:readline).match? %r!\A---\s*\r?\n!
     rescue EOFError
       false
     end
 
-    # Determine whether the given content string contains Liquid Tags or Vaiables
+    # Determine whether the given content string contains Liquid Tags or Variables
     #
     # Returns true is the string contains sequences of `{%` or `{{`
     def has_liquid_construct?(content)
@@ -148,7 +152,7 @@ module Jekyll
 
       content.include?("{%") || content.include?("{{")
     end
-    # rubocop: enable PredicateName
+    # rubocop: enable Naming/PredicateName
 
     # Slugify a filename or title.
     #
@@ -212,7 +216,7 @@ module Jekyll
       slug = replace_character_sequence_with_hyphen(string, :mode => mode)
 
       # Remove leading/trailing hyphen
-      slug.gsub!(%r!^\-|\-$!i, "")
+      slug.gsub!(%r!^-|-$!i, "")
 
       slug.downcase! unless cased
       Jekyll.logger.warn("Warning:", "Empty `slug` generated for '#{string}'.") if slug.empty?
@@ -262,7 +266,7 @@ module Jekyll
       template
     end
 
-    # Work the same way as Dir.glob but seperating the input into two parts
+    # Work the same way as Dir.glob but separating the input into two parts
     # ('dir' + '/' + 'pattern') to make sure the first part('dir') does not act
     # as a pattern.
     #
@@ -284,7 +288,7 @@ module Jekyll
     # patterns - the patterns (or the pattern) which will be applied under the dir
     # flags    - the flags which will be applied to the pattern
     #
-    # Returns matched pathes
+    # Returns matched paths
     def safe_glob(dir, patterns, flags = 0)
       return [] unless Dir.exist?(dir)
 
@@ -300,12 +304,15 @@ module Jekyll
     # and a given param
     def merged_file_read_opts(site, opts)
       merged = (site ? site.file_read_opts : {}).merge(opts)
-      if merged[:encoding] && !merged[:encoding].start_with?("bom|")
+
+      # always use BOM when reading UTF-encoded files
+      if merged[:encoding]&.downcase&.start_with?("utf-")
         merged[:encoding] = "bom|#{merged[:encoding]}"
       end
-      if merged["encoding"] && !merged["encoding"].start_with?("bom|")
+      if merged["encoding"]&.downcase&.start_with?("utf-")
         merged["encoding"] = "bom|#{merged["encoding"]}"
       end
+
       merged
     end
 

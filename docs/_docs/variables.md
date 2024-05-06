@@ -5,7 +5,7 @@ permalink: /docs/variables/
 
 Jekyll traverses your site looking for files to process. Any files with
 [front matter](/docs/front-matter/) are subject to processing. For each of these
-files, Jekyll makes a variety of data available via the [Liquid](/docs/liquid/).
+files, Jekyll makes a variety of data available via [Liquid](/docs/liquid/).
 The following is a reference of the available data.
 
 ## Global Variables
@@ -33,6 +33,11 @@ The following is a reference of the available data.
     that value will be available as <code>layout.class</code> in the layout and its parents.
   </p>
 </div>
+
+## Theme Variables {%- include docs_version_badge.html version="4.3.0" -%}
+{: #theme-variables }
+
+{% include docs_variables_table.html scope=site.data.jekyll_variables.theme %}
 
 ## Paginator
 

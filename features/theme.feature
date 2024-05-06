@@ -16,12 +16,19 @@ Feature: Writing themes
 
   Scenario: A theme with SCSS
     Given I have a configuration file with "theme" set to "test-theme"
-    And I have a css directory
-    And I have a "css/main.scss" page that contains "@import 'test-theme-black';"
     When I run jekyll build
     Then I should get a zero exit status
     And the _site directory should exist
-    And I should see ".sample {\n  color: black; }" in "_site/css/main.css"
+    And I should see ".sample {\n  color: red;\n}\n\n\/\*# sourceMappingURL=style.css.map \*\/" in "_site/assets/style.css"
+
+  Scenario: Overriding a theme with SCSS
+    Given I have a configuration file with "theme" set to "test-theme"
+    And I have an assets directory
+    And I have an "assets/style.scss" page that contains "@import 'test-theme-black';"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should see ".sample {\n  color: black;\n}\n\n\/\*# sourceMappingURL=style.css.map \*\/" in "_site/assets/style.css"
 
   Scenario: A theme with an include
     Given I have a configuration file with "theme" set to "test-theme"
@@ -33,6 +40,33 @@ Feature: Writing themes
     And the _site directory should exist
     And I should see "I'm in the project." in "_site/index.html"
     And I should see "<span class=\"sample\">include.html from test-theme</span>" in "_site/index.html"
+
+  Scenario: A theme without data
+    Given I have a configuration file with "theme" set to "test-theme-skinny"
+    And I have a _data directory
+    And I have a "_data/greetings.yml" file with content:
+      """
+      foo: "Hello! I’m foo. And who are you?"
+      """
+    And I have an "index.html" page that contains "{{ site.data.greetings.foo }}"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should see "Hello! I’m foo. And who are you?" in "_site/index.html"
+
+  Scenario: A theme with data overridden by data in source directory
+    Given I have a configuration file with "theme" set to "test-theme"
+    And I have a _data directory
+    And I have a "_data/greetings.yml" file with content:
+      """
+      foo: "Hello! I’m foo. And who are you?"
+      """
+    And I have an "index.html" page that contains "{{ site.data.greetings.foo }}"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should see "Hello! I’m foo. And who are you?" in "_site/index.html"
+    And I should not see "Hello! I’m bar. What’s up so far?" in "_site/index.html"
 
   Scenario: A theme with a layout
     Given I have a configuration file with "theme" set to "test-theme"
@@ -56,6 +90,17 @@ Feature: Writing themes
     And the _site directory should exist
     And I should see "From your site." in "_site/assets/application.coffee"
     And I should see "From your site." in "_site/assets/base.js"
+
+  Scenario: A theme with *just* layouts
+    Given I have a configuration file with "theme" set to "test-theme-skinny"
+    And I have an "index.html" page with layout "home" that contains "The quick brown fox."
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should see "Message: The quick brown fox." in "_site/index.html"
+    But I should not see "_includes" in the build output
+    And I should not see "_sass" in the build output
+    And I should not see "assets" in the build output
 
   Scenario: Requiring dependencies of a theme
     Given I have a configuration file with "theme" set to "test-dependency-theme"
@@ -88,3 +133,19 @@ Feature: Writing themes
     And I should see "default.html from test-theme:" in "_site/2016/04/21/entry1.html"
     And I should see "I am using a local layout." in "_site/2016/04/21/entry1.html"
     And I should see "I am a post layout!" in "_site/2016/04/21/entry1.html"
+
+  Scenario: Complicated site that puts it all together in respect to data folders
+    Given I have a configuration file with "theme" set to "test-theme"
+    And I have a _data directory
+    And I have a "_data/i18n.yml" file with content:
+      """
+      testimonials:
+        header: Kundenstimmen
+      """
+    And I have an "index.html" page that contains "{% include testimonials.html %}"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should not see "Testimonials" in "_site/index.html"
+    And I should see "Kundenstimmen" in "_site/index.html"
+    And I should see "Design by FTC" in "_site/index.html"

@@ -3,29 +3,25 @@ layout: step
 title: Liquid
 position: 2
 ---
-Liquid is where Jekyll starts to get more interesting. Liquid is a templating
-language which has three main parts: [objects](#objects), [tags](#tags) and
-[filters](#filters).
-
+Liquid is where Jekyll starts to get more interesting. It is a templating
+language which has three main components: 
+  * [objects](#objects)
+  * [tags](#tags) 
+  * [filters](#filters)
 
 ## Objects
 
-Objects tell Liquid where to output content. They're denoted by double curly
-braces: {% raw %}`{{`{% endraw %} and {% raw %}`}}`{% endraw %}. For example:
+Objects tell Liquid to output predefined [variables](../../variables/) as content on a page. Use double curly braces for objects: {% raw %}`{{`{% endraw %} and {% raw %}`}}`{% endraw %}. 
 
-{% raw %}
-```liquid
-{{ page.title }}
-```  
-{% endraw %}
-
-Outputs a variable called `page.title` on the page.
+For example, {% raw %}`{{ page.title }}`{% endraw %} displays the `page.title` variable.
 
 ## Tags
 
-Tags create the logic and control flow for templates. They are denoted by curly
-braces and percent signs: {% raw %}`{%`{% endraw %} and
-{% raw %}`%}`{% endraw %}. For example:
+Tags define the logic and control flow for templates. Use curly
+braces and percent signs for tags: {% raw %}`{%`{% endraw %} and
+{% raw %}`%}`{% endraw %}. 
+
+For example:
 
 {% raw %}
 ```liquid
@@ -34,41 +30,72 @@ braces and percent signs: {% raw %}`{%`{% endraw %} and
     sidebar content
   </div>
 {% endif %}
-```  
+```
 {% endraw %}
 
-Outputs the sidebar if `page.show_sidebar` is true. You can learn more about the
-tags available to Jekyll [here](/docs/liquid/tags/).
+This displays the sidebar if the value of the `show_sidebar` page variable is true. 
+
+Learn more about the tags available in Jekyll [here](/docs/liquid/tags/).
 
 ## Filters
 
 Filters change the output of a Liquid object. They are used within an output
-and are separated by a `|`. For example:
+and are separated by a `|`. 
+
+For example:
 
 {% raw %}
 ```liquid
 {{ "hi" | capitalize }}
-```  
+```
 {% endraw %}
 
-Outputs `Hi`. You can learn more about the filters available to Jekyll
-[here](/docs/liquid/filters/).
+This displays `Hi` instead of `hi`. 
+
+[Learn more about the filters](/docs/liquid/filters/) available.
 
 ## Use Liquid
 
-Now it's your turn, change the Hello World! on your page to output as lowercase:
+Now, use Liquid to make your `Hello World!` text from [Setup](../01-setup/) lowercase:
 
 {% raw %}
 ```liquid
 ...
 <h1>{{ "Hello World!" | downcase }}</h1>
 ...
-```  
+```
 {% endraw %}
 
-It may not seem like it now, but much of Jekyll's power comes from combining
-Liquid with other features. 
+To make Jekyll process your changes, add [front matter](../03-front-matter/) to the top of the page:
 
-In order to see the changes from `downcase` Liquid filter, we will need to add front matter. 
+```yaml
+---
+# front matter tells Jekyll to process Liquid
+---
+```
 
-That's next. Let's keep going.
+Your HTML document should look like this:
+
+{% raw %}
+```html
+---
+---
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Home</title>
+  </head>
+  <body>
+    <h1>{{ "Hello World!" | downcase }}</h1>
+  </body>
+</html>
+```
+{% endraw %}
+
+When you reload your browser, you should see `hello world!`. 
+
+Much of Jekyll's power comes from combining Liquid with other features. Add frontmatter to pages to make Jekyll process the Liquid on those pages.
+
+Next, you'll learn more about frontmatter.

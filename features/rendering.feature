@@ -49,6 +49,20 @@ Feature: Rendering
     Then  I should get a zero exit-status
     And   I should not see "Liquid Exception:" in the build output
 
+  Scenario: Rendering a default site containing a file with a non-existent Liquid variable
+    Given I have a "index.html" file with content:
+    """
+    ---
+    title: Simple Test
+    ---
+    {{ site.lorem.ipsum }}
+    {{ site.title }}
+    """
+    And  I have a configuration file with "title" set to "Hello World"
+    When I run jekyll build
+    Then I should get a zero exit-status
+    And  the _site directory should exist
+
   Scenario: Rendering a custom site containing a file with a non-existent Liquid variable
     Given I have a "index.html" file with content:
     """
@@ -98,7 +112,7 @@ Feature: Rendering
   Scenario: Don't place asset files in layout
     Given I have an "index.scss" page with layout "simple" that contains ".foo-bar { color:black; }"
     And I have an "index.coffee" page with layout "simple" that contains "whatever()"
-    And I have a configuration file with "gems" set to "[jekyll-coffeescript]"
+    And I have a configuration file with "plugins" set to "[jekyll-coffeescript]"
     And I have a simple layout that contains "{{ content }}Ahoy, indeed!"
     When I run jekyll build
     Then I should get a zero exit status
@@ -154,7 +168,7 @@ Feature: Rendering
     When I run jekyll build
     Then I should get a zero exit status
     And the _site directory should exist
-    And I should see ".foo-bar {\n  color: red; }" in "_site/index.css"
+    And I should see ".foo-bar {\n  color: red;\n}\n\n\/\*# sourceMappingURL=index.css.map \*\/" in "_site/index.css"
 
   Scenario: Not render liquid in CoffeeScript without explicitly including jekyll-coffeescript
     Given I have an "index.coffee" page with animal "cicada" that contains "hey='for {{page.animal}}'"
@@ -165,8 +179,63 @@ Feature: Rendering
 
   Scenario: Render liquid in CoffeeScript with jekyll-coffeescript enabled
     Given I have an "index.coffee" page with animal "cicada" that contains "hey='for {{page.animal}}'"
-    And I have a configuration file with "gems" set to "[jekyll-coffeescript]"
+    And I have a configuration file with "plugins" set to "[jekyll-coffeescript]"
     When I run jekyll build
     Then I should get a zero exit status
     And the _site directory should exist
     And I should see "hey = 'for cicada';" in "_site/index.js"
+
+  Scenario: Rendering Liquid expressions that return strings containing Liquid expressions
+    Given I have an "index.md" file with content:
+      """
+      ---
+      prequel: "{% link series/first-part.md %}"
+      sequel: "{% link series/last-part.md %}"
+      ---
+
+      This is the second-part of the series named {{ site.novel }}.
+      The first part is at {{ page.prequel }}.
+
+      Lorem ipsum
+
+      {% capture sequel_link %}{{ page.sequel }}{% endcapture %}
+      The last part of the series can be read at {{ sequel_link }}
+      """
+    And I have a configuration file with "novel" set to "'{{ site.title }}'"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And I should see "series named {{ site.title }}" in "_site/index.html"
+    And I should see "{% link series/first-part.md %}" in "_site/index.html"
+    And I should see "{% link series/last-part.md %}" in "_site/index.html"
+
+  Scenario: Render content of another page
+    Given I have an "index.md" page that contains "__Hello World__"
+    And I have an "about.md" page that contains "{{ page.name }}"
+    And I have a "test.json" file with content:
+      """
+      ---
+      ---
+
+      {
+        "hpages": [
+          {%- for page in site.html_pages %}
+          {
+            "url"    : {{ page.url     | jsonify }},
+            "name"   : {{ page.name    | jsonify }},
+            "path"   : {{ page.path    | jsonify }},
+            "title"  : {{ page.title   | jsonify }},
+            "layout" : {{ page.layout  | jsonify }},
+            "content": {{ page.content | jsonify }},
+            "excerpt": {{ page.excerpt | jsonify }}
+          }{% unless forloop.last %},{% endunless -%}
+          {% endfor %}
+        ]
+      }
+      """
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    But I should not see "content\": \"{{ page.name }}" in "_site/test.json"
+    And I should not see "content\": \"__Hello World__" in "_site/test.json"
+    But I should see "content\": \"<p>about.md</p>" in "_site/test.json"
+    And I should see "content\": \"<p><strong>Hello World</strong></p>" in "_site/test.json"

@@ -163,7 +163,7 @@ Given(%r!^I have a configuration file with "(.*)" set to "(.*)"$!) do |key, valu
     else
       {}
     end
-  config[key] = YAML.load(value)
+  config[key] = SafeYAML.load(value)
   Jekyll.set_timezone(value) if key == "timezone"
   File.write("_config.yml", YAML.dump(config))
 end
@@ -239,9 +239,14 @@ end
 
 When(%r!^I decide to build the theme gem$!) do
   Dir.chdir(Paths.theme_gem_dir)
-  File.new("_includes/blank.html", "w")
-  File.new("_sass/blank.scss", "w")
-  File.new("assets/blank.scss", "w")
+  [
+    "_includes/blank.html",
+    "_sass/blank.scss",
+    "assets/blank.scss",
+    "_config.yml"
+  ].each do |filename|
+    File.new(filename, "w")
+  end
 end
 
 #
@@ -385,6 +390,7 @@ Then(%r!^I should get an updated git index$!) do
     Gemfile
     LICENSE.txt
     README.md
+    _config.yml
     _includes/blank.html
     _layouts/default.html
     _layouts/page.html

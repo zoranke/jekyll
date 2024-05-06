@@ -1,26 +1,36 @@
 /* Base */
 
- html {
-   box-sizing: border-box;
- }
+@charset "utf-8";
 
- *,
- *:before,
- *:after {
-   box-sizing: inherit;
- }
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
 
 body {
-  font: 300 21px Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 300;  
   color: #ddd;
   background-color: #333;
   @include box-shadow(inset 0 3px 30px rgba(0,0,0,.3));
   text-shadow: 0 1px 3px rgba(0,0,0,.5);
-  -webkit-font-feature-settings: "kern" 1;
-  -moz-font-feature-settings: "kern" 1;
-  -o-font-feature-settings: "kern" 1;
-  font-feature-settings: "kern" 1;
-  font-kerning: normal;
+
+  // Not legible with 300 weight
+  // -moz-osx-font-smoothing: grayscale;
+  // -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  
+  -webkit-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  -moz-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  -ms-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  -o-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
   margin: 0;
 }
 
@@ -434,7 +444,9 @@ article {
 }
 
 @media (max-width: 480px) {
-  article ul { padding-left: 20px; }
+  article {
+    ul, ol { padding-left: 20px }
+  }
 }
 
 @media (max-width: 568px) {
@@ -664,24 +676,67 @@ article h2:first-child { margin-top: 0; }
 }
 
 .post-date,
-.post-author { margin-left: 10px; }
+.post-author { margin-left: 15px; }
+.post-author .author-name { margin-left: 8px }
 
 .news article + article {
-  margin-top: -10px;
-  @include border-radius(0 0 10px 10px);
+  margin-top: -6px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   border-top: 1px solid #555;
+  border-radius: 0;
   @include box-shadow(0 -1px 0 #2f2f2f);
+
+  h2.post-title {
+    margin-bottom: 0.45em;
+  }
+  .post-date { margin-left: 0 }
 }
 
-/* Code Highlighting */
+/* Tutorials */
 
+.tutorial-header {
+  float: none;
+  margin-bottom: 30px;
+  padding: 0 0 15px;
+  background: transparent;
+  border-bottom: 1px solid #545454;
+  .improve { padding-top: 14px }
+  .tutorial-title {
+    display: block;
+    width: calc(100% - 160px);
+    font-size: 1.75em
+  }
+}
+
+.tutorial-meta {
+  @extend .post-meta;
+  font-weight: 400;
+  text-shadow: none;
+  .tutorial-date,
+  .tutorial-author {
+    display: inline-block;
+    height: 24px
+  }
+}
+
+.tutorial-date {
+  vertical-align: sub
+}
+.tutorial-author {
+  margin-left: 15px;
+  .author-name { vertical-align: middle }
+}
+
+
+/* Code Highlighting */
 
 pre,
 code {
   white-space: pre;
   display: inline-block;
   margin: 0;
-  font: 14px/1.8em Menlo, Consolas, "Courier New", Courier, "Liberation Mono", monospace;
+  font: 14px/1.625em Menlo, Consolas, "Courier New", Courier, "Liberation Mono", monospace;
   padding: 0 0.5em;
 }
 
@@ -690,6 +745,7 @@ code {
 }
 
 .highlight,
+a > code,
 p > pre,
 p > code,
 p > nobr > code,
@@ -697,7 +753,7 @@ li > code,
 li> pre,
 h5 > code,
 .note > code {
-  background-color: #2b2b2b;
+  background-color: #272727;
   color: #fff;
   max-width: 100%;
   overflow-x: auto;
@@ -707,6 +763,8 @@ h5 > code,
     0 1px 0 rgba(255,255,255,.1),
     0 -1px 0 rgba(0,0,0,.5));
 }
+
+a > code { color: inherit }
 
 .note .highlight {
   width: 94%;
@@ -736,11 +794,18 @@ h5 > code,
   overflow: auto;
 }
 
-pre.highlight { padding: 10px 0.5em; }
+pre.highlight,
+.highlight > pre { 
+  padding: 10px 0.5em; 
+}
 
 .highlighter-rouge .highlight {
   @extend .highlight;
   margin: 0;
+}
+
+div.highlighter-rouge + div.highlighter-rouge {
+  margin: 30px 0 0;
 }
 
 /* HTML Elements */
@@ -896,6 +961,15 @@ code.output {
   margin-bottom: 2px;
 }
 
+table#builtin-hooks {
+  td {
+    text-align: center;
+    &:first-of-type {
+      max-width: 330px
+    }
+  }
+}
+
 /* Note types */
 
 .note {
@@ -963,6 +1037,16 @@ code.output {
     font-size: 28px;
     font-weight: 700;
     text-shadow: 0 -1px 0 rgba(0,0,0,.5);
+  }
+}
+
+p.note {
+  color: #fff;
+  font-weight: 400;
+  font-size: .75em;
+
+  &:after {
+    line-height: 1.21;
   }
 }
 
@@ -1153,9 +1237,11 @@ code.output {
 }
 
 .language-sh {
+  margin-top: 5px;
+  margin-bottom: 5px;
   position: relative;
   &:before {
-    display: table;
+    display: inline-table;
     padding: 8px;
     width: 100%;
     padding: 5px 0;
@@ -1168,19 +1254,27 @@ code.output {
     background-image: -webkit-linear-gradient(top, #f7f7f7 0%, #cfcfcf 7%, #aaaaaa 100%);
     background-image: -moz-linear-gradient(top, #f7f7f7 0%, #cfcfcf 7%, #aaaaaa 100%);
     background-image: -o-linear-gradient(top, #f7f7f7 0%, #cfcfcf 7%, #aaaaaa 100%);
-    background-image: linear-gradient(top, #f7f7f7 0%,#cfcfcf 7%,#aaaaaa 100%);
+    background-image: linear-gradient(to bottom, #ddd 0%,#999 84%,#bbb 100%);
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7f7f7', endColorstr='#aaaaaa',GradientType=0 );
-    border-bottom: 1px solid #111;
     text-align: center;
     content: "terminal";
-    @include border-radius(5px 5px 0 0);
+    @include border-radius(3px 3px 0 0);
     @include box-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   .highlight {
-    @include border-radius(0 0 5px 5px);
+    @include border-radius(0 0 3px 3px);
+  }
+  div.highlight {
+    border: 1px solid;
+    border-color: transparent #bbb #bbb #bbb;
+    @include box-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   pre.highlight {
+    min-height: 48px;
     background: #1c1c1c;
+  }
+  code {
+    font-size: 15px
   }
 }
 
@@ -1228,4 +1322,31 @@ code.output {
 
 ol div.highlighter-rouge {
   margin: 8px 0 10px 0;
+}
+
+.disclaimer-ribbon {
+  position: relative;
+  width: calc(100% + 100px);
+  margin: 45px -50px 0;
+  padding: 5px 20px;
+  font-size: 0.725em;
+  font-weight: 600;
+  color: #efc98f;
+  background: #695949;
+  &:before, &:after {
+    position: absolute;
+    top: -9px;
+    content: "";
+    display: table;
+    border: 5px solid;
+    z-index: -1;
+  }
+  &:before {
+    left: 0;
+    border-color: transparent #b28b70 #b28b70 transparent;
+  }
+  &:after {
+    right: 0;
+    border-color: transparent transparent #b28b70 #b28b70;
+  }
 }

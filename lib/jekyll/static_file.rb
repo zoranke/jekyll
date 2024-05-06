@@ -4,7 +4,9 @@ module Jekyll
   class StaticFile
     extend Forwardable
 
-    attr_reader :relative_path, :extname, :name, :data
+    attr_reader :relative_path, :extname,
+                :type, # Returns the type of the collection if present, nil otherwise.
+                :name
 
     def_delegator :to_liquid, :to_json, :to_json
 
@@ -25,7 +27,7 @@ module Jekyll
     # base - The String path to the <source>.
     # dir  - The String path between <source> and the file.
     # name - The String filename of the file.
-    # rubocop: disable ParameterLists
+    # rubocop: disable Metrics/ParameterLists
     def initialize(site, base, dir, name, collection = nil)
       @site = site
       @base = base
@@ -34,18 +36,17 @@ module Jekyll
       @collection = collection
       @relative_path = File.join(*[@dir, @name].compact)
       @extname = File.extname(@name)
-      @data = @site.frontmatter_defaults.all(relative_path, type)
+      @type = @collection&.label&.to_sym
     end
-    # rubocop: enable ParameterLists
+    # rubocop: enable Metrics/ParameterLists
 
     # Returns source file path.
     def path
-      # Static file is from a collection inside custom collections directory
-      if !@collection.nil? && !@site.config["collections_dir"].empty?
-        File.join(*[@base, @site.config["collections_dir"], @dir, @name].compact)
-      else
-        File.join(*[@base, @dir, @name].compact)
-      end
+      @path ||= if !@collection.nil? && !@site.config["collections_dir"].empty?
+                  File.join(*[@base, @site.config["collections_dir"], @dir, @name].compact)
+                else
+                  File.join(*[@base, @dir, @name].compact)
+                end
     end
 
     # Obtain destination path.
@@ -54,8 +55,8 @@ module Jekyll
     #
     # Returns destination file path.
     def destination(dest)
-      dest = @site.in_dest_dir(dest)
-      @site.in_dest_dir(dest, Jekyll::URL.unescape_path(url))
+      @destination ||= {}
+      @destination[dest] ||= @site.in_dest_dir(dest, Jekyll::URL.unescape_path(url))
     end
 
     def destination_rel_dir
@@ -111,6 +112,10 @@ module Jekyll
       true
     end
 
+    def data
+      @data ||= @site.frontmatter_defaults.all(relative_path, type)
+    end
+
     def to_liquid
       @to_liquid ||= Drops::StaticFileDrop.new(self)
     end
@@ -126,7 +131,7 @@ module Jekyll
         :collection => @collection.label,
         :path       => cleaned_relative_path,
         :output_ext => "",
-        :name       => "",
+        :name       => basename,
         :title      => "",
       }
     end
@@ -154,7 +159,7 @@ module Jekyll
 
     # Applies a similar URL-building technique as Jekyll::Document that takes
     # the collection's URL template into account. The default URL template can
-    # be overriden in the collection's configuration in _config.yml.
+    # be overridden in the collection's configuration in _config.yml.
     def url
       @url ||= begin
         base = if @collection.nil?
@@ -167,11 +172,6 @@ module Jekyll
                end.to_s.chomp("/")
         base << extname
       end
-    end
-
-    # Returns the type of the collection if present, nil otherwise.
-    def type
-      @type ||= @collection.nil? ? nil : @collection.label.to_sym
     end
 
     # Returns the front matter defaults defined for the file's URL and/or type

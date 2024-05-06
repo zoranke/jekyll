@@ -130,11 +130,9 @@ class TestUtils < JekyllUnitTest
 
   context "The \`Utils.slugify\` method" do
     should "return nil if passed nil" do
-      begin
-        assert Utils.slugify(nil).nil?
-      rescue NoMethodError
-        assert false, "Threw NoMethodError"
-      end
+      assert_nil Utils.slugify(nil)
+    rescue NoMethodError
+      assert false, "Threw NoMethodError"
     end
 
     should "replace whitespace with hyphens" do
@@ -174,6 +172,11 @@ class TestUtils < JekyllUnitTest
 
     should "replace punctuation in any scripts by hyphens" do
       assert_equal "5時-6時-三-一四", Utils.slugify("5時〜6時 三・一四")
+    end
+
+    should "not replace Unicode 'Mark', 'Letter', or 'Number: Decimal Digit' category characters" do
+      assert_equal "மல்லிப்பூ-வகைகள்", Utils.slugify("மல்லிப்பூ வகைகள்")
+      assert_equal "மல்லிப்பூ-வகைகள்", Utils.slugify("மல்லிப்பூ வகைகள்", :mode => "pretty")
     end
 
     should "not modify the original string" do
@@ -405,11 +408,18 @@ class TestUtils < JekyllUnitTest
       assert_nil opts[:encoding]
     end
 
-    should "add bom to encoding" do
+    should "add bom to utf-encoding" do
       opts = { "encoding" => "utf-8", :encoding => "utf-8" }
       merged = Utils.merged_file_read_opts(nil, opts)
       assert_equal "bom|utf-8", merged["encoding"]
       assert_equal "bom|utf-8", merged[:encoding]
+    end
+
+    should "not add bom to non-utf encoding" do
+      opts = { "encoding" => "ISO-8859-1", :encoding => "ISO-8859-1" }
+      merged = Utils.merged_file_read_opts(nil, opts)
+      assert_equal "ISO-8859-1", merged["encoding"]
+      assert_equal "ISO-8859-1", merged[:encoding]
     end
 
     should "preserve bom in encoding" do

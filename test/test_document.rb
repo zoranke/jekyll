@@ -39,7 +39,7 @@ class TestDocument < JekyllUnitTest
     end
 
     should "exist" do
-      assert !@document.nil?
+      refute_nil @document
     end
 
     should "know its relative path" do
@@ -63,7 +63,7 @@ class TestDocument < JekyllUnitTest
     end
 
     should "know whether it's a YAML file" do
-      assert_equal false, @document.yaml_file?
+      refute @document.yaml_file?
     end
 
     should "know its data" do
@@ -159,6 +159,23 @@ class TestDocument < JekyllUnitTest
     should "output its relative path as path in Liquid" do
       assert_equal "_methods/configuration.md", @document.to_liquid["path"]
     end
+
+    context "when rendered with Liquid" do
+      should "respect the front matter definition" do
+        site = fixture_site("collections" => ["roles"]).tap(&:process)
+        docs = site.collections["roles"].docs
+
+        # Ruby context: doc.basename is aliased as doc.to_liquid["name"] by default.
+
+        document = docs.detect { |d| d.relative_path == "_roles/unnamed.md" }
+        assert_equal "unnamed.md", document.basename
+        assert_equal "unnamed.md", document.to_liquid["name"]
+
+        document = docs.detect { |d| d.relative_path == "_roles/named.md" }
+        assert_equal "named.md", document.basename
+        assert_equal "launcher", document.to_liquid["name"]
+      end
+    end
   end
 
   context "a document as part of a collection with front matter defaults" do
@@ -175,7 +192,7 @@ class TestDocument < JekyllUnitTest
         }]
       )
       @site.process
-      @document = @site.collections["slides"].docs.select { |d| d.is_a?(Document) }.first
+      @document = @site.collections["slides"].docs.find { |d| d.is_a?(Document) }
     end
 
     should "know the front matter defaults" do
@@ -507,7 +524,7 @@ class TestDocument < JekyllUnitTest
     end
 
     should "be a static file" do
-      assert_equal true, @document.is_a?(StaticFile)
+      assert @document.is_a?(StaticFile)
     end
 
     should "be set to write" do
@@ -515,7 +532,7 @@ class TestDocument < JekyllUnitTest
     end
 
     should "be in the list of docs_to_write" do
-      assert @site.docs_to_write.include?(@document)
+      assert_includes @site.docs_to_write, @document
     end
 
     should "be output in the correct place" do
@@ -548,7 +565,7 @@ class TestDocument < JekyllUnitTest
     end
 
     should "be output in the correct place" do
-      assert_equal true, File.file?(@dest_file)
+      assert File.file?(@dest_file)
     end
   end
 
@@ -577,7 +594,7 @@ class TestDocument < JekyllUnitTest
     end
 
     should "be output in the correct place" do
-      assert_equal true, File.file?(@dest_file)
+      assert File.file?(@dest_file)
     end
   end
 

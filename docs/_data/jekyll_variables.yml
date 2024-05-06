@@ -1,7 +1,7 @@
 # Variables provided by Jekyll core
 #
 #   name:           : name of the variable
-#   description:    : content returned by the varialble
+#   description:    : content returned by the variable
 
 global:
   - name: site
@@ -16,6 +16,10 @@ global:
     description: >-
       Layout specific information + the <a href="/docs/front-matter/">front matter</a>.
       Custom variables set via front matter in layouts will be available here.
+  - name: theme
+    description: >-
+      Theme-gem specific information as defined in the theme's gemspec. Useful for rendering
+      information in the theme demo's "About" page, for example. See below for details.
   - name: content
     description: >-
       In layout files, the rendered content of the Post or Page being wrapped.
@@ -51,10 +55,10 @@ site:
       <code>name</code>, <code>basename</code> and <code>extname</code>.
   - name: site.html_pages
     description: >-
-      A subset of `site.pages` listing those which end in `.html`.
+      A subset of <code>site.pages</code> listing those which end in <code>.html</code>.
   - name: site.html_files
     description: >-
-      A subset of `site.static_files` listing those which end in `.html`.
+      A subset of <code>site.static_files</code> listing those which end in <code>.html</code>.
   - name: site.collections
     description: >-
       A list of all the collections (including posts).
@@ -76,7 +80,7 @@ site:
       Contains the url of your site as it is configured in the <code>_config.yml</code>.
       For example, if you have <code>url: http://mysite.com</code> in your configuration file,
       then it will be accessible in Liquid as <code>site.url</code>. For the development
-      environment there is <a href="/news/#3-siteurl-is-set-by-the-development-server">an
+      environment there is <a href="/news/2016/10/06/jekyll-3-3-is-here/#3-siteurl-is-set-by-the-development-server">an
       exception</a>, if you are running <code>jekyll serve</code> in a development environment
       <code>site.url</code> will be set to the value of <code>host</code>, <code>port</code>,
       and SSL-related options. This defaults to <code>url: http://localhost:4000</code>.
@@ -149,6 +153,20 @@ page:
     description: >-
       The previous post relative to the position of the current post in <code>site.posts</code>.
       Returns <code>nil</code> for the first entry.
+
+theme:
+  - name: theme.root
+    description: Absolute path to the theme-gem.
+  - name: theme.authors
+    description: Comma separated string composed of the authors of the theme-gem.
+  - name: theme.description
+    description: Description or summary of the theme-gem as specified in the theme gemspec. 
+  - name: theme.version
+    description: The version string of current theme.
+  - name: theme.dependencies
+    description: List of runtime dependencies of the theme.
+  - name: theme.metadata
+    description: A mapping of key-value pairs as defined in the theme gemspec. 
 
 paginator:
   - name: paginator.page

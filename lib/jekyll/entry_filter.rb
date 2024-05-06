@@ -3,9 +3,8 @@
 module Jekyll
   class EntryFilter
     attr_reader :site
-    SPECIAL_LEADING_CHARACTERS = [
-      ".", "_", "#", "~",
-    ].freeze
+
+    SPECIAL_LEADING_CHAR_REGEX = %r!\A#{Regexp.union([".", "_", "#", "~"])}!o.freeze
 
     def initialize(site, base_directory = nil)
       @site = site
@@ -34,13 +33,21 @@ module Jekyll
         # Reject this entry if it is just a "dot" representation.
         #   e.g.: '.', '..', '_movies/.', 'music/..', etc
         next true if e.end_with?(".")
-        # Reject this entry if it is a symlink.
-        next true if symlink?(e)
-        # Do not reject this entry if it is included.
-        next false if included?(e)
 
-        # Reject this entry if it is special, a backup file, or excluded.
-        special?(e) || backup?(e) || excluded?(e)
+        # Check if the current entry is explicitly included and cache the result
+        included = included?(e)
+
+        # Reject current entry if it is excluded but not explicitly included as well.
+        next true if excluded?(e) && !included
+
+        # Reject current entry if it is a symlink.
+        next true if symlink?(e)
+
+        # Do not reject current entry if it is explicitly included.
+        next false if included
+
+        # Reject current entry if it is special or a backup file.
+        special?(e) || backup?(e)
       end
     end
 
@@ -50,12 +57,12 @@ module Jekyll
     end
 
     def special?(entry)
-      SPECIAL_LEADING_CHARACTERS.include?(entry[0..0]) ||
-        SPECIAL_LEADING_CHARACTERS.include?(File.basename(entry)[0..0])
+      SPECIAL_LEADING_CHAR_REGEX.match?(entry) ||
+        SPECIAL_LEADING_CHAR_REGEX.match?(File.basename(entry))
     end
 
     def backup?(entry)
-      entry[-1..-1] == "~"
+      entry.end_with?("~")
     end
 
     def excluded?(entry)
@@ -79,28 +86,26 @@ module Jekyll
     end
 
     # --
-    # NOTE: Pathutil#in_path? gets the realpath.
-    # @param [<Anything>] entry the entry you want to validate.
-    # Check if a path is outside of our given root.
+    # Check if given path is outside of current site's configured source directory.
     # --
     def symlink_outside_site_source?(entry)
-      !Pathutil.new(entry).in_path?(
-        site.in_source_dir
-      )
+      !File.realpath(entry).start_with?(site.in_source_dir)
     end
 
     # Check if an entry matches a specific pattern.
     # Returns true if path matches against any glob pattern, else false.
     def glob_include?(enumerator, entry)
-      entry_with_source = File.join(site.source, entry)
+      entry_with_source = PathManager.join(site.source, entry)
+      entry_is_directory = File.directory?(entry_with_source)
 
       enumerator.any? do |pattern|
         case pattern
         when String
-          pattern_with_source = File.join(site.source, pattern)
+          pattern_with_source = PathManager.join(site.source, pattern)
 
           File.fnmatch?(pattern_with_source, entry_with_source) ||
-            entry_with_source.start_with?(pattern_with_source)
+            entry_with_source.start_with?(pattern_with_source) ||
+            (pattern_with_source == "#{entry_with_source}/" if entry_is_directory)
         when Regexp
           pattern.match?(entry_with_source)
         else

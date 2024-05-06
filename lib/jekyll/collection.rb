@@ -65,6 +65,7 @@ module Jekyll
           read_static_file(file_path, full_path)
         end
       end
+      site.static_files.concat(files) unless files.empty?
       sort_docs!
     end
 
@@ -166,7 +167,7 @@ module Jekyll
     #
     # Returns a sanitized version of the label.
     def sanitize_label(label)
-      label.gsub(%r![^a-z0-9_\-\.]!i, "")
+      label.gsub(%r![^a-z0-9_\-.]!i, "")
     end
 
     # Produce a representation of this Collection for use in Liquid.
@@ -239,7 +240,7 @@ module Jekyll
 
         # Fall back to `Document#<=>` if the properties were equal or were non-sortable
         # Otherwise continue with current sort-order
-        if order.zero? || order.nil?
+        if order.nil? || order.zero?
           apples[-1] <=> olives[-1]
         else
           order

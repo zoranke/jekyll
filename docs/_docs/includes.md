@@ -69,7 +69,7 @@ You can also pass parameters to an include. For example, suppose you have a file
 ```
 {% endraw %}
 
-The `{% raw %}{{ include.content }}{% endraw %}` is a parameter that gets populated when you call the include and specify a value for that parameter, like this:
+The {% raw %}`{{ include.content }}`{% endraw %} is a parameter that gets populated when you call the include and specify a value for that parameter, like this:
 
 {% raw %}
 ```liquid
@@ -85,7 +85,7 @@ For example, suppose you have a special image syntax with complex formatting, an
 
 ```html
 <figure>
-   <a href="http://jekyllrb.com">
+   <a href="https://jekyllrb.com">
    <img src="logo.png" style="max-width: 200px;"
       alt="Jekyll logo" />
    </a>

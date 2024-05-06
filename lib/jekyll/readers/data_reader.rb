@@ -3,10 +3,13 @@
 module Jekyll
   class DataReader
     attr_reader :site, :content
-    def initialize(site)
+
+    def initialize(site, in_source_dir: nil)
       @site = site
       @content = {}
       @entry_filter = EntryFilter.new(site)
+      @in_source_dir = in_source_dir || @site.method(:in_source_dir)
+      @source_dir = @in_source_dir.call("/")
     end
 
     # Read all the files in <dir> and adds them to @content
@@ -16,7 +19,7 @@ module Jekyll
     # Returns @content, a Hash of the .yaml, .yml,
     # .json, and .csv files in the base directory
     def read(dir)
-      base = site.in_source_dir(dir)
+      base = @in_source_dir.call(dir)
       read_data_to(base, @content)
       @content
     end
@@ -36,7 +39,7 @@ module Jekyll
       end
 
       entries.each do |entry|
-        path = @site.in_source_dir(dir, entry)
+        path = @in_source_dir.call(dir, entry)
         next if @entry_filter.symlink?(path)
 
         if File.directory?(path)
@@ -52,16 +55,13 @@ module Jekyll
     #
     # Returns the contents of the data file.
     def read_data_file(path)
+      Jekyll.logger.debug "Reading:", path.sub(@source_dir, "")
+
       case File.extname(path).downcase
       when ".csv"
-        CSV.read(path,
-                 :headers  => true,
-                 :encoding => site.config["encoding"]).map(&:to_hash)
+        CSV.read(path, **csv_config).map { |row| convert_row(row) }
       when ".tsv"
-        CSV.read(path,
-                 :col_sep  => "\t",
-                 :headers  => true,
-                 :encoding => site.config["encoding"]).map(&:to_hash)
+        CSV.read(path, **tsv_config).map { |row| convert_row(row) }
       else
         SafeYAML.load_file(path)
       end
@@ -70,6 +70,44 @@ module Jekyll
     def sanitize_filename(name)
       name.gsub(%r![^\w\s-]+|(?<=^|\b\s)\s+(?=$|\s?\b)!, "")
         .gsub(%r!\s+!, "_")
+    end
+
+    private
+
+    # @return [Hash]
+    def csv_config
+      @csv_config ||= read_config("csv_reader")
+    end
+
+    # @return [Hash]
+    def tsv_config
+      @tsv_config ||= read_config("tsv_reader", { :col_sep => "\t" })
+    end
+
+    # @param config_key [String]
+    # @param overrides [Hash]
+    # @return [Hash]
+    # @see https://ruby-doc.org/stdlib-2.5.0/libdoc/csv/rdoc/CSV.html#Converters
+    def read_config(config_key, overrides = {})
+      reader_config = config[config_key] || {}
+
+      defaults = {
+        :converters => reader_config.fetch("csv_converters", []).map(&:to_sym),
+        :headers    => reader_config.fetch("headers", true),
+        :encoding   => reader_config.fetch("encoding", config["encoding"]),
+      }
+
+      defaults.merge(overrides)
+    end
+
+    def config
+      @config ||= site.config
+    end
+
+    # @param row [Array, CSV::Row]
+    # @return [Array, Hash]
+    def convert_row(row)
+      row.instance_of?(CSV::Row) ? row.to_hash : row
     end
   end
 end

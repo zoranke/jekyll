@@ -52,9 +52,9 @@ class TestRegenerator < JekyllUnitTest
 
       # these should pass, since nothing has changed, and the
       # loop above made sure the designations exist
-      assert !@regenerator.regenerate?(@page)
-      assert !@regenerator.regenerate?(@post)
-      assert !@regenerator.regenerate?(@document)
+      refute @regenerator.regenerate?(@page)
+      refute @regenerator.regenerate?(@post)
+      refute @regenerator.regenerate?(@document)
     end
 
     should "regenerate if destination missing" do
@@ -118,7 +118,7 @@ class TestRegenerator < JekyllUnitTest
       @regenerator.add_dependency(path, @layout_path)
 
       File.rename(@layout_path, @layout_path + ".tmp")
-      refute File.exist?(@layout_path)
+      refute_path_exists(@layout_path)
 
       @regenerator.clear_cache
       assert @regenerator.regenerate?(@post)
@@ -174,9 +174,7 @@ class TestRegenerator < JekyllUnitTest
       metadata_file = source_dir(".jekyll-metadata")
       @regenerator = Regenerator.new(@site)
 
-      File.open(metadata_file, "w") do |f|
-        f.write(@regenerator.metadata.to_yaml)
-      end
+      File.write(metadata_file, @regenerator.metadata.to_yaml)
 
       @regenerator = Regenerator.new(@site)
       assert_equal File.mtime(@path), @regenerator.metadata[@path]["mtime"]
@@ -231,7 +229,7 @@ class TestRegenerator < JekyllUnitTest
       @regenerator.write_metadata
       @regenerator = Regenerator.new(@site)
 
-      assert !@regenerator.modified?(@path)
+      refute @regenerator.modified?(@path)
     end
 
     should "not regenerate if path in cache is false" do
@@ -240,9 +238,9 @@ class TestRegenerator < JekyllUnitTest
       @regenerator.write_metadata
       @regenerator = Regenerator.new(@site)
 
-      assert !@regenerator.modified?(@path)
-      assert !@regenerator.cache[@path]
-      assert !@regenerator.modified?(@path)
+      refute @regenerator.modified?(@path)
+      refute @regenerator.cache[@path]
+      refute @regenerator.modified?(@path)
     end
 
     should "regenerate if path in not in metadata" do

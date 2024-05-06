@@ -46,7 +46,7 @@ module Jekyll
     end
 
     def self.require_from_bundler
-      if !ENV["JEKYLL_NO_BUNDLER_REQUIRE"] && File.file?("Gemfile")
+      if !ENV["JEKYLL_NO_BUNDLER_REQUIRE"] && gemfile_exists?
         require "bundler"
 
         Bundler.setup
@@ -59,6 +59,13 @@ module Jekyll
       else
         false
       end
+    end
+
+    # Check for the existence of a Gemfile.
+    #
+    # Returns true if a Gemfile exists in the places bundler will look
+    def self.gemfile_exists?
+      File.file?("Gemfile") || (ENV["BUNDLE_GEMFILE"] && File.file?(ENV["BUNDLE_GEMFILE"]))
     end
 
     # Check whether a gem plugin is allowed to be used during this build.
@@ -106,9 +113,10 @@ module Jekyll
       pagination_included = (site.config["plugins"] || []).include?("jekyll-paginate") ||
         defined?(Jekyll::Paginate)
       if site.config["paginate"] && !pagination_included
-        Jekyll::Deprecator.deprecation_message "You appear to have pagination " \
-          "turned on, but you haven't included the `jekyll-paginate` gem. " \
-          "Ensure you have `plugins: [jekyll-paginate]` in your configuration file."
+        Jekyll::Deprecator.deprecation_message <<~MSG
+          You appear to have pagination turned on, but you haven't included the `jekyll-paginate`
+          gem. Ensure you have `plugins: [jekyll-paginate]` in your configuration file.
+        MSG
       end
     end
   end

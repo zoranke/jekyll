@@ -30,12 +30,12 @@ require "minitest/autorun"
 require "minitest/reporters"
 require "minitest/profile"
 require "rspec/mocks"
-require_relative "../lib/jekyll.rb"
+require_relative "../lib/jekyll"
 
 Jekyll.logger = Logger.new(StringIO.new, :error)
 
 require "kramdown"
-require "shoulda"
+require "shoulda-context"
 
 include Jekyll
 
@@ -51,12 +51,12 @@ Minitest::Reporters.use! [
 module Minitest::Assertions
   def assert_exist(filename, msg = nil)
     msg = message(msg) { "Expected '#{filename}' to exist" }
-    assert File.exist?(filename), msg
+    assert_path_exists(filename, msg)
   end
 
   def refute_exist(filename, msg = nil)
     msg = message(msg) { "Expected '#{filename}' not to exist" }
-    refute File.exist?(filename), msg
+    refute_path_exists(filename, msg)
   end
 end
 
@@ -80,6 +80,17 @@ module DirectoryHelpers
   def test_dir(*subdirs)
     root_dir("test", *subdirs)
   end
+
+  def temp_dir(*subdirs)
+    if Utils::Platforms.vanilla_windows?
+      drive = Dir.pwd.sub(%r!^([^/]+).*!, '\1')
+      temp_root = File.join(drive, "tmp")
+    else
+      temp_root = "/tmp"
+    end
+
+    File.join(temp_root, *subdirs)
+  end
 end
 
 class JekyllUnitTest < Minitest::Test
@@ -94,8 +105,7 @@ class JekyllUnitTest < Minitest::Test
   end
 
   def mocks_expect(*args)
-    RSpec::Mocks::ExampleMethods::ExpectHost.instance_method(:expect)\
-      .bind(self).call(*args)
+    RSpec::Mocks::ExampleMethods::ExpectHost.instance_method(:expect).bind(self).call(*args)
   end
 
   def before_setup
@@ -155,7 +165,7 @@ class JekyllUnitTest < Minitest::Test
   def directory_with_contents(path)
     FileUtils.rm_rf(path)
     FileUtils.mkdir(path)
-    File.open("#{path}/index.html", "w") { |f| f.write("I was previously generated.") }
+    File.write("#{path}/index.html", "I was previously generated.")
   end
 
   def with_env(key, value)
@@ -234,6 +244,7 @@ module TestWEBrick
       :ServerType => Thread,
       :Logger => WEBrick::Log.new(logger),
       :AccessLog => [[logger, ""]],
+      :MimeTypesCharset => Jekyll::Commands::Serve.send(:mime_types_charset),
       :JekyllOptions => {},
     }
   end
@@ -248,6 +259,38 @@ module TestWEBrick
       :NondisclosureName => [
         ".ht*", "~*",
       ]
+    )
+  end
+end
+
+class TagUnitTest < JekyllUnitTest
+  def render_content(content, override = {})
+    base_config = {
+      "source"      => source_dir,
+      "destination" => dest_dir,
+    }
+    site = fixture_site(base_config.merge(override))
+
+    if override["read_posts"]
+      site.posts.docs.concat(PostReader.new(site).read_posts(""))
+    elsif override["read_collections"]
+      CollectionReader.new(site).read
+    elsif override["read_all"]
+      site.read
+    end
+
+    @result = render_with(site, content)
+  end
+
+  private
+
+  def render_with(site, content)
+    converter = site.converters.find { |c| c.instance_of?(Jekyll::Converters::Markdown) }
+    payload   = { "highlighter_prefix" => converter.highlighter_prefix,
+                  "highlighter_suffix" => converter.highlighter_suffix, }
+    info = { :registers => { :site => site } }
+    converter.convert(
+      Liquid::Template.parse(content).render!(payload, info)
     )
   end
 end

@@ -3,11 +3,7 @@
 source "https://rubygems.org"
 gemspec :name => "jekyll"
 
-# Temporarily lock JRuby builds on Travis CI to i18n-1.2.x until JRuby is able to handle
-# refinements introduced in i18n-1.3.0
-gem "i18n", "~> 1.2.0" if RUBY_ENGINE == "jruby"
-
-gem "rake", "~> 12.0"
+gem "rake", "~> 13.0"
 
 group :development do
   gem "launchy", "~> 2.3"
@@ -19,7 +15,8 @@ end
 #
 
 group :test do
-  gem "cucumber", "~> 3.0"
+  gem "activesupport", "< 7.1.0"
+  gem "cucumber", RUBY_VERSION >= "2.5" ? "~> 5.1.2" : "~> 4.1"
   gem "httpclient"
   gem "jekyll_test_plugin"
   gem "jekyll_test_plugin_malicious"
@@ -27,13 +24,21 @@ group :test do
   gem "nokogiri", "~> 1.7"
   gem "rspec"
   gem "rspec-mocks"
-  gem "rubocop", "~> 0.71.0"
+  gem "rubocop", "~> 1.57.2"
+  gem "rubocop-minitest"
   gem "rubocop-performance"
+  gem "rubocop-rake"
+  gem "rubocop-rspec"
   gem "test-dependency-theme", :path => File.expand_path("test/fixtures/test-dependency-theme", __dir__)
   gem "test-theme", :path => File.expand_path("test/fixtures/test-theme", __dir__)
+  gem "test-theme-skinny", :path => File.expand_path("test/fixtures/test-theme-skinny", __dir__)
   gem "test-theme-symlink", :path => File.expand_path("test/fixtures/test-theme-symlink", __dir__)
+  gem "test-theme-w-empty-data", :path => File.expand_path("test/fixtures/test-theme-w-empty-data", __dir__)
 
-  gem "jruby-openssl" if RUBY_ENGINE == "jruby"
+  if RUBY_ENGINE == "jruby"
+    gem "http_parser.rb", "~> 0.6.0"
+    gem "jruby-openssl"
+  end
 end
 
 #
@@ -44,7 +49,7 @@ group :test_legacy do
   gem "minitest"
   gem "minitest-profile"
   gem "minitest-reporters"
-  gem "shoulda"
+  gem "shoulda-context"
   gem "simplecov"
 end
 
@@ -69,11 +74,18 @@ group :jekyll_optional_dependencies do
   gem "jekyll-paginate"
   gem "jekyll-redirect-from"
   gem "kramdown-syntax-coderay"
+  gem "matrix"
   gem "mime-types", "~> 3.0"
+  # Psych 5 has stopped bundling `libyaml` and expects it to be installed on the host system prior
+  # to being invoked.
+  # Since we don't have a direct dependency on the Psych gem (it gets included in the gem bundle as
+  # a dependency of the `rdoc` gem), lock psych gem to v4.x instead of installing `libyaml` in our
+  # development / CI environment.
+  gem "psych", "~> 4.0"
   gem "rdoc", "~> 6.0"
-  gem "tomlrb", "~> 1.2"
+  gem "tomlrb"
 
-  platform :ruby, :mswin, :mingw, :x64_mingw do
+  platforms :ruby, :mswin, :mingw, :x64_mingw do
     gem "classifier-reborn", "~> 2.2"
     gem "liquid-c", "~> 4.0"
     gem "yajl-ruby", "~> 1.4"
@@ -81,8 +93,8 @@ group :jekyll_optional_dependencies do
 
   # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem
   # and associated library
-  install_if -> { RUBY_PLATFORM =~ %r!mingw|mswin|java! } do
-    gem "tzinfo", "~> 1.2"
+  platforms :jruby, :mswin, :mingw, :x64_mingw do
+    gem "tzinfo", ENV["TZINFO_VERSION"] if ENV["TZINFO_VERSION"]
     gem "tzinfo-data"
   end
 end

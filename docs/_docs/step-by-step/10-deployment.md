@@ -11,35 +11,49 @@ It's good practice to have a [Gemfile](/docs/ruby-101/#gemfile) for your site.
 This ensures the version of Jekyll and other gems remains consistent across
 different environments.
 
-Create `Gemfile` in the root with the following:
+Create a `Gemfile` in the root. 
+The file should be called 'Gemfile' and should *not* have any extension. 
+You can create a Gemfile with Bundler and then add the `jekyll` gem:
 
+```sh
+bundle init
+bundle add jekyll
 ```
-source 'https://rubygems.org'
 
-gem 'jekyll'
+Your file should look something like:
+
+```ruby
+# frozen_string_literal: true
+source "https://rubygems.org"
+
+gem "jekyll"
 ```
 
-Then run `bundle install` in your terminal. This installs the gems and
-creates `Gemfile.lock` which locks the current gem versions for a future
-`bundle install`. If you ever want to update your gem versions you can run
-`bundle update`.
+Bundler installs the gems and creates a `Gemfile.lock` which locks the current 
+gem versions for a future `bundle install`. If you ever want to update your gem 
+versions you can run `bundle update`.
 
 When using a `Gemfile`, you'll run commands like `jekyll serve` with
 `bundle exec` prefixed. So the full command is:
 
-```bash
+```sh
 bundle exec jekyll serve
 ```
 
 This restricts your Ruby environment to only use gems set in your `Gemfile`.
 
+Note: if publishing your site with GitHub Pages, you can match production
+version of Jekyll by using the `github-pages` gem instead of `jekyll`
+in your `Gemfile`. In this scenario you may also want to exclude `Gemfile.lock`
+from your repository because GitHub Pages ignores that file.
+
 ## Plugins
 
 Jekyll plugins allow you to create custom generated content specific to your
-site. There's many [plugins](/docs/plugins/) available or you can even
+site. There are many [plugins](/docs/plugins/) available or you can even
 write your own.
 
-There's three official plugins which are useful on almost any Jekyll site:
+There are three official plugins which are useful on almost any Jekyll site:
 
 * [jekyll-sitemap](https://github.com/jekyll/jekyll-sitemap) - Creates a sitemap
 file to help search engines index content
@@ -51,21 +65,21 @@ with SEO
 To use these first you need to add them to your `Gemfile`. If you put them
 in a `jekyll_plugins` group they'll automatically be required into Jekyll:
 
-```
+```ruby
 source 'https://rubygems.org'
 
-gem 'jekyll'
+gem "jekyll"
 
 group :jekyll_plugins do
-  gem 'jekyll-sitemap'
-  gem 'jekyll-feed'
-  gem 'jekyll-seo-tag'
+  gem "jekyll-sitemap"
+  gem "jekyll-feed"
+  gem "jekyll-seo-tag"
 end
 ```
 
 Then add these lines to your `_config.yml`:
 
-```
+```yaml
 plugins:
   - jekyll-feed
   - jekyll-sitemap
@@ -109,7 +123,7 @@ To do this you can use [environments](/docs/configuration/environments/). You
 can set the environment by using the `JEKYLL_ENV` environment variable when
 running a command. For example:
 
-```bash
+```sh
 JEKYLL_ENV=production bundle exec jekyll build
 ```
 
@@ -130,11 +144,25 @@ on production you would do the following:
 The final step is to get the site onto a production server. The most basic way
 to do this is to run a production build:
 
-```bash
+```sh
 JEKYLL_ENV=production bundle exec jekyll build
 ```
 
-And copy the contents of `_site` to your server.
+And then copy the contents of `_site` to your server.
+
+<div class="note warning">
+  <h5>Destination folders are cleaned on site builds</h5>
+  <p>
+    The contents of <code>_site</code> are automatically cleaned, by default, when
+    the site is built. Files or folders that are not created by your site's build
+    process will be removed.
+  </p>
+  <p>
+    Some files could be retained by specifying them within the <code>keep_files</code>
+    configuration directive. Other files could be retained by keeping them in your
+    assets directory.
+  </p>
+</div>
 
 A better way is to automate this process using a [CI](/docs/deployment/automated/)
 or [3rd party](/docs/deployment/third-party/).

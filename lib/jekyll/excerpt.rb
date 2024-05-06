@@ -4,8 +4,7 @@ module Jekyll
   class Excerpt
     extend Forwardable
 
-    attr_accessor :doc
-    attr_accessor :content, :ext
+    attr_accessor :content, :doc, :ext
     attr_writer   :output
 
     def_delegators :@doc,
@@ -56,7 +55,7 @@ module Jekyll
     #
     # Returns true if the string passed in
     def include?(something)
-      (output&.include?(something)) || content.include?(something)
+      output&.include?(something) || content.include?(something)
     end
 
     # The UID for this doc (useful in feeds).
@@ -139,7 +138,7 @@ module Jekyll
       return head if tail.empty?
 
       head = sanctify_liquid_tags(head) if head.include?("{%")
-      definitions = extract_markdown_link_reference_defintions(head, tail)
+      definitions = extract_markdown_link_reference_definitions(head, tail)
       return head if definitions.empty?
 
       head << "\n\n" << definitions.join("\n")
@@ -155,7 +154,7 @@ module Jekyll
       tag_names.flatten!
       tag_names.reverse_each do |tag_name|
         next unless liquid_block?(tag_name)
-        next if head =~ endtag_regex_stash(tag_name)
+        next if endtag_regex_stash(tag_name).match?(head)
 
         modified = true
         head << "\n{% end#{tag_name} %}"
@@ -165,7 +164,7 @@ module Jekyll
       head
     end
 
-    def extract_markdown_link_reference_defintions(head, tail)
+    def extract_markdown_link_reference_definitions(head, tail)
       [].tap do |definitions|
         tail.scan(MKDWN_LINK_REF_REGEX).each do |segments|
           definitions << segments.join if head.include?(segments[0])
@@ -191,8 +190,8 @@ module Jekyll
 
     def print_build_warning
       Jekyll.logger.warn "Warning:", "Excerpt modified in #{doc.relative_path}!"
-      Jekyll.logger.warn "", "Found a Liquid block containing the excerpt separator" \
-                         " #{doc.excerpt_separator.inspect}. "
+      Jekyll.logger.warn "", "Found a Liquid block containing the excerpt separator " \
+                             "#{doc.excerpt_separator.inspect}."
       Jekyll.logger.warn "", "The block has been modified with the appropriate closing tag."
       Jekyll.logger.warn "", "Feel free to define a custom excerpt or excerpt_separator in the"
       Jekyll.logger.warn "", "document's Front Matter if the generated excerpt is unsatisfactory."

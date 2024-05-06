@@ -4,39 +4,43 @@ permalink: /docs/structure/
 ---
 A basic Jekyll site usually looks something like this:
 
-```sh
+```
 .
 ├── _config.yml
 ├── _data
-|   └── members.yml
+│   └── members.yml
 ├── _drafts
-|   ├── begin-with-the-crazy-ideas.md
-|   └── on-simplicity-in-technology.md
+│   ├── begin-with-the-crazy-ideas.md
+│   └── on-simplicity-in-technology.md
 ├── _includes
-|   ├── footer.html
-|   └── header.html
+│   ├── footer.html
+│   └── header.html
 ├── _layouts
-|   ├── default.html
-|   └── post.html
+│   ├── default.html
+│   └── post.html
 ├── _posts
-|   ├── 2007-10-29-why-every-programmer-should-play-nethack.md
-|   └── 2009-04-26-barcamp-boston-4-roundup.md
+│   ├── 2007-10-29-why-every-programmer-should-play-nethack.md
+│   └── 2009-04-26-barcamp-boston-4-roundup.md
 ├── _sass
-|   ├── _base.scss
-|   └── _layout.scss
+│   ├── _base.scss
+│   └── _layout.scss
 ├── _site
+├── .jekyll-cache
+│   └── Jekyll
+│       └── Cache
+│           └── [...]
 ├── .jekyll-metadata
 └── index.html # can also be an 'index.md' with valid front matter
 ```
 
-<div class="note info">
+<div class="note">
   <h5>Directory structure of Jekyll sites using gem-based themes</h5>
   <p>
-    Starting <strong>Jekyll 3.2</strong>, a new Jekyll project bootstrapped with <code>jekyll new</code> uses <a href="/docs/themes/">gem-based themes</a> to define the look of the site. This results in a lighter default directory structure : <code>_layouts</code>, <code>_includes</code> and <code>_sass</code> are stored in the theme-gem, by default.
+    Since version {% include docs_version_badge.html version="3.2"%}, a new Jekyll project bootstrapped with <code>jekyll new</code> uses <a href="/docs/themes/">gem-based themes</a> to define the look of the site. This results in a lighter default directory structure: <code>_layouts</code>, <code>_includes</code> and <code>_sass</code> are stored in the theme-gem, by default.
   </p>
   <br />
   <p>
-     <a href="https://github.com/jekyll/minima">minima</a> is the current default theme, and <code>bundle show minima</code> will show you where minima theme's files are stored on your computer.
+     <a href="https://github.com/jekyll/minima">minima</a> is the current default theme, and <code>bundle info minima</code> will show you where minima theme's files are stored on your computer.
   </p>
 </div>
 
@@ -144,6 +148,7 @@ An overview of what each of these does:
           These are sass partials that can be imported into your <code>main.scss</code>
           which will then be processed into a single stylesheet
           <code>main.css</code> that defines the styles to be used by your site.
+          Learn <a href="{{ '/docs/assets/' | relative_url }}">how to work with assets</a>. 
         </p>
       </td>
     </tr>
@@ -161,15 +166,33 @@ An overview of what each of these does:
     </tr>
     <tr>
       <td>
+        <p><code>.jekyll-cache</code></p>
+      </td>
+      <td>
+        <p>
+          Keeps a copy of the generated pages and markup (e.g.: markdown) for
+          faster serving. Created when using e.g.: <code>jekyll serve</code>.
+          Can be disabled with
+          <a href="/docs/configuration/options/">an option and/or flag</a>.
+          This directory will not be included in the generated site. It’s
+          probably a good idea to add this to your <code>.gitignore</code>
+          file.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <p><code>.jekyll-metadata</code></p>
       </td>
       <td>
         <p>
           This helps Jekyll keep track of which files have not been modified
           since the site was last built, and which files will need to be
-          regenerated on the next build. This file will not be included in the
-          generated site. It’s probably a good idea to add this to your
-          <code>.gitignore</code> file.
+          regenerated on the next build. Only created when using
+          <a href="/docs/configuration/incremental-regeneration/">
+          incremental regeneration</a> (e.g.: with <code>jekyll serve -I</code>).
+          This file will not be included in the generated site. It’s probably
+          a good idea to add this to your <code>.gitignore</code> file.
         </p>
       </td>
     </tr>
@@ -194,8 +217,8 @@ An overview of what each of these does:
       </td>
       <td>
         <p>
-          Every other directory and file except for those listed above—such as
-          <code>css</code> and <code>images</code> folders,
+          Except for the special cases listed above, every other directory and 
+          file—such as <code>css</code> and <code>images</code> folders,
           <code>favicon.ico</code> files, and so forth—will be copied verbatim
           to the generated site. There are plenty of <a href="/showcase/">sites
           already using Jekyll</a> if you’re curious to see how they’re laid
@@ -206,3 +229,11 @@ An overview of what each of these does:
   </tbody>
 </table>
 </div>
+
+Every file or directory beginning with the following characters: `.`, `_ `, `#` or `~` in the `source` directory will not be included in the `destination` folder. Such paths will have to be explicitly specified via the config file in the `include` directive to make sure they're copied over:
+
+```yaml
+include:
+ - _pages
+ - .htaccess
+ ```

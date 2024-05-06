@@ -32,7 +32,7 @@ class TestSite < JekyllUnitTest
 
     should "have an array for plugins if passed as a string" do
       site = Site.new(site_configuration("plugins_dir" => "/tmp/plugins"))
-      array = Utils::Platforms.windows? ? ["C:/tmp/plugins"] : ["/tmp/plugins"]
+      array = [temp_dir("plugins")]
       assert_equal array, site.plugins
     end
 
@@ -40,11 +40,7 @@ class TestSite < JekyllUnitTest
       site = Site.new(site_configuration(
                         "plugins_dir" => ["/tmp/plugins", "/tmp/otherplugins"]
                       ))
-      array = if Utils::Platforms.windows?
-                ["C:/tmp/plugins", "C:/tmp/otherplugins"]
-              else
-                ["/tmp/plugins", "/tmp/otherplugins"]
-              end
+      array = [temp_dir("plugins"), temp_dir("otherplugins")]
       assert_equal array, site.plugins
     end
 
@@ -89,6 +85,34 @@ class TestSite < JekyllUnitTest
     should "use .jekyll-cache directory at source as cache_dir by default" do
       site = Site.new(default_configuration)
       assert_equal File.join(site.source, ".jekyll-cache"), site.cache_dir
+    end
+
+    should "have the cache_dir hidden from Git" do
+      site = fixture_site
+      assert_equal site.source, source_dir
+      assert_exist source_dir(".jekyll-cache", ".gitignore")
+      assert_equal(
+        "# ignore everything in this directory\n*\n",
+        File.binread(source_dir(".jekyll-cache", ".gitignore"))
+      )
+    end
+
+    should "load config file from theme-gem as Jekyll::Configuration instance" do
+      site = fixture_site("theme" => "test-theme")
+      assert_instance_of Jekyll::Configuration, site.config
+      assert_equal "Hello World", site.config["title"]
+    end
+
+    context "with a custom cache_dir configuration" do
+      should "have the custom cache_dir hidden from Git" do
+        site = fixture_site("cache_dir" => "../../custom-cache-dir")
+        refute_exist File.expand_path("../../custom-cache-dir/.gitignore", site.source)
+        assert_exist source_dir("custom-cache-dir", ".gitignore")
+        assert_equal(
+          "# ignore everything in this directory\n*\n",
+          File.binread(source_dir("custom-cache-dir", ".gitignore"))
+        )
+      end
     end
   end
 
@@ -191,7 +215,7 @@ class TestSite < JekyllUnitTest
 
       # simulate destination file deletion
       File.unlink dest
-      refute File.exist?(dest)
+      refute_path_exists(dest)
 
       sleep 1
       @site.process
@@ -223,6 +247,7 @@ class TestSite < JekyllUnitTest
       @site.process
       # exclude files in symlinked directories here and insert them in the
       # following step when not on Windows.
+      # rubocop:disable Style/WordArray
       sorted_pages = %w(
         %#\ +.md
         .htaccess
@@ -236,21 +261,26 @@ class TestSite < JekyllUnitTest
         environment.html
         exploit.md
         foo.md
+        foo.md
         humans.txt
         index.html
         index.html
         info.md
+        main.css.map
         main.scss
         properties.html
         sitemap.xml
         static_files.html
+        test-styles.css.map
+        test-styles.scss
         trailing-dots...md
       )
+      # rubocop:enable Style/WordArray
       unless Utils::Platforms.really_windows?
         # files in symlinked directories may appear twice
-        sorted_pages.push("main.scss", "symlinked-file").sort!
+        sorted_pages.push("main.css.map", "main.scss", "symlinked-file").sort!
       end
-      assert_equal sorted_pages, @site.pages.map(&:name)
+      assert_equal sorted_pages, @site.pages.map(&:name).sort!
     end
 
     should "read posts" do
@@ -268,12 +298,12 @@ class TestSite < JekyllUnitTest
 
     should "read pages with YAML front matter" do
       abs_path = File.expand_path("about.html", @site.source)
-      assert_equal true, Utils.has_yaml_header?(abs_path)
+      assert Utils.has_yaml_header?(abs_path)
     end
 
     should "enforce a strict 3-dash limit on the start of the YAML front matter" do
       abs_path = File.expand_path("pgp.key", @site.source)
-      assert_equal false, Utils.has_yaml_header?(abs_path)
+      refute Utils.has_yaml_header?(abs_path)
     end
 
     should "expose jekyll version to site payload" do
@@ -591,8 +621,8 @@ class TestSite < JekyllUnitTest
           site = fixture_site("theme" => {})
           assert_nil site.theme
         end
-        expected_msg = "Theme: value of 'theme' in config should be String " \
-          "to use gem-based themes, but got Hash\n"
+        expected_msg = "Theme: value of 'theme' in config should be String to use " \
+                       "gem-based themes, but got Hash\n"
         assert_includes output, expected_msg
       end
 
@@ -700,6 +730,33 @@ class TestSite < JekyllUnitTest
           @site.in_cache_dir("../../foo.md.metadata")
         )
       end
+    end
+  end
+
+  context "site process phases" do
+    should "return nil as documented" do
+      site = fixture_site
+      [:reset, :read, :generate, :render, :cleanup, :write].each do |phase|
+        assert_nil site.send(phase)
+      end
+    end
+  end
+
+  context "static files in a collection" do
+    should "be exposed via site instance" do
+      site = fixture_site("collections" => ["methods"])
+      site.read
+
+      assert_includes site.static_files.map(&:relative_path), "_methods/extensionless_static_file"
+    end
+
+    should "not be revisited in `Site#each_site_file`" do
+      site = fixture_site("collections" => { "methods" => { "output" => true } })
+      site.read
+
+      visited_files = []
+      site.each_site_file { |file| visited_files << file }
+      assert_equal visited_files.count, visited_files.uniq.count
     end
   end
 end

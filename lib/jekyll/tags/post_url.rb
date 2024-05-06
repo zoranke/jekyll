@@ -16,9 +16,8 @@ module Jekyll
                 "'#{name}' does not contain valid date and/or title."
         end
 
-        escaped_slug = Regexp.escape(slug)
-        @name_regex = %r!^_posts/#{path}#{date}-#{escaped_slug}\.[^.]+|
-          ^#{path}_posts/?#{date}-#{escaped_slug}\.[^.]+!x
+        basename_pattern = "#{date}-#{Regexp.escape(slug)}\\.[^.]+"
+        @name_regex = %r!^_posts/#{path}#{basename_pattern}|^#{path}_posts/?#{basename_pattern}!
       end
 
       def post_date
@@ -51,7 +50,7 @@ module Jekyll
         if path.nil? || path == ""
           other.data["slug"]
         else
-          path + "/" + other.data["slug"]
+          "#{path}/#{other.data["slug"]}"
         end
       end
     end
@@ -87,11 +86,11 @@ module Jekyll
         site.posts.docs.each do |document|
           next unless @post.deprecated_equality document
 
-          Jekyll::Deprecator.deprecation_message "A call to "\
-            "'{% post_url #{@post.name} %}' did not match " \
-            "a post using the new matching method of checking name " \
-            "(path-date-slug) equality. Please make sure that you " \
-            "change this tag to match the post's name exactly."
+          Jekyll::Deprecator.deprecation_message(
+            "A call to '{% post_url #{@post.name} %}' did not match a post using the new " \
+            "matching method of checking name (path-date-slug) equality. Please make sure " \
+            "that you change this tag to match the post's name exactly."
+          )
           return relative_url(document)
         end
 

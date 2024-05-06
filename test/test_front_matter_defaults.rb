@@ -25,10 +25,6 @@ class TestFrontMatterDefaults < JekyllUnitTest
       assert_equal "val", @affected.data["key"]
       assert_nil @not_affected.data["key"]
     end
-
-    should "not call Dir.glob block" do
-      refute_includes @output, "Globbed Scope Path:"
-    end
   end
 
   context "A site with full front matter defaults (glob)" do
@@ -53,9 +49,38 @@ class TestFrontMatterDefaults < JekyllUnitTest
       assert_equal "val", @affected.data["key"]
       assert_nil @not_affected.data["key"]
     end
+  end
 
-    should "call Dir.glob block" do
-      assert_includes @output, "Globbed Scope Path:"
+  context "A site with collections and front matter defaults with glob patterns" do
+    setup do
+      site = fixture_site(
+        "collections_dir" => "gathering",
+        "collections"     => { "staff" => { "output" => true } },
+        "defaults"        => [
+          {
+            "scope"  => { "path" => "_staff/**/*.md", "type" => "staff" },
+            "values" => { "layout" => "simple" },
+          },
+          {
+            "scope"  => { "path" => "_staff/**/*.svg" },
+            "values" => { "css_class" => "epilson" },
+          },
+        ]
+      )
+      site.read
+      @staff = site.collections["staff"]
+    end
+
+    should "affect the appropriate items only" do
+      @staff.docs.each do |item|
+        assert_equal "simple", item.data["layout"]
+        assert_nil item.data["css_class"]
+      end
+
+      @staff.files.each do |item|
+        assert_equal "epilson", item.data["css_class"]
+        assert_nil item.data["layout"]
+      end
     end
   end
 
@@ -97,7 +122,7 @@ class TestFrontMatterDefaults < JekyllUnitTest
       )
 
       @site.process
-      @affected = @site.posts.docs.find { |page| page.relative_path =~ %r!win\/! }
+      @affected = @site.posts.docs.find { |page| page.relative_path.include?("win") }
       @not_affected = @site.pages.find { |page| page.relative_path == "about.html" }
     end
 
@@ -126,7 +151,7 @@ class TestFrontMatterDefaults < JekyllUnitTest
     end
 
     should "affect only the specified type and all paths" do
-      assert_equal @affected.reject { |page| page.data["key"] == "val" }, []
+      assert_equal([], @affected.reject { |page| page.data["key"] == "val" })
       assert_equal @not_affected.reject { |page| page.data["key"] == "val" },
                    @not_affected
     end
@@ -150,7 +175,7 @@ class TestFrontMatterDefaults < JekyllUnitTest
     end
 
     should "affect only the specified type and all paths" do
-      assert_equal @affected.reject { |page| page.data["key"] == "val" }, []
+      assert_equal([], @affected.reject { |page| page.data["key"] == "val" })
       assert_equal @not_affected.reject { |page| page.data["key"] == "val" },
                    @not_affected
     end
@@ -173,8 +198,8 @@ class TestFrontMatterDefaults < JekyllUnitTest
     end
 
     should "affect all types and paths" do
-      assert_equal @affected.reject { |page| page.data["key"] == "val" }, []
-      assert_equal @not_affected.reject { |page| page.data["key"] == "val" }, []
+      assert_equal([], @affected.reject { |page| page.data["key"] == "val" })
+      assert_equal([], @not_affected.reject { |page| page.data["key"] == "val" })
     end
   end
 
@@ -193,8 +218,8 @@ class TestFrontMatterDefaults < JekyllUnitTest
     end
 
     should "affect all types and paths" do
-      assert_equal @affected.reject { |page| page.data["key"] == "val" }, []
-      assert_equal @not_affected.reject { |page| page.data["key"] == "val" }, []
+      assert_equal([], @affected.reject { |page| page.data["key"] == "val" })
+      assert_equal([], @not_affected.reject { |page| page.data["key"] == "val" })
     end
   end
 
